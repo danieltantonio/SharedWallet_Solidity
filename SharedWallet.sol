@@ -34,11 +34,11 @@ contract SharedWallet {
 
     mapping(address => Balance) public wallet;
 
-    function depositMoney(uint _amount) public payable {
+    function depositMoney() public payable {
         require(msg.sender == owner, "You are not the owner");
-        wallet[owner].totalBalance += _amount;
+        wallet[owner].totalBalance += msg.value;
         wallet[owner].numTransactions++;
-        Payment memory payment = Payment(_amount, block.timestamp);
+        Payment memory payment = Payment(msg.value, block.timestamp);
         wallet[owner].payments[wallet[owner].numTransactions] = payment;
     }
 
@@ -52,8 +52,8 @@ contract SharedWallet {
         return wallet[owner].requests[_request];
     }
 
-    function requestWithdraw(uint _amount) public {
-        Request memory request = Request(msg.sender, _amount, block.timestamp);
+    function requestWithdraw() public {
+        Request memory request = Request(msg.sender, 1 ether, block.timestamp);
         wallet[owner].withdrawRequests++;
         wallet[owner].requests[wallet[owner].withdrawRequests] = request;
     }
