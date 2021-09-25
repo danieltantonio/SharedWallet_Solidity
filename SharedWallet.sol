@@ -44,4 +44,10 @@ contract SharedWallet {
        wallet[owner].totalBalance += msg.value;
        wallet[owner].numTransactions++; 
    }
+
+   function withdrawRequest() public {
+       wallet[owner].withdrawReqs++;
+       Request memory request = Request(msg.sender, 1 ether, block.timestamp);
+       wallet[owner].requests[wallet[owner].withdrawReqs] = request;
+   }
 }
