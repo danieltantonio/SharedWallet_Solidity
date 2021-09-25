@@ -33,7 +33,15 @@ contract SharedWallet {
        mapping(uint => Payments) payments;
    }
 
+   mapping(address => Wallet) wallet;
+
    constructor() {
        owner = msg.sender;
+   }
+
+   function depositMoney() public payable {
+       require(msg.sender == owner, "You are (not) the owner");
+       wallet[owner].totalBalance += msg.value;
+       wallet[owner].numTransactions++; 
    }
 }
