@@ -1,7 +1,8 @@
 pragma solidity ^0.8.7;
 
-contract SharedWallet {
-   address owner;
+import './Owned.sol';
+
+contract SharedWallet is Owned {
 
    struct Request {
        address req;
@@ -22,7 +23,7 @@ contract SharedWallet {
 
    struct Payments {
        address req;
-       mapping(address => Withdraws) withdraws;
+       uint reqNum;
    }
 
    struct Wallet {
@@ -33,21 +34,41 @@ contract SharedWallet {
        mapping(uint => Payments) payments;
    }
 
-   mapping(address => Wallet) wallet;
+   mapping(address => Wallet) public wallet;
+   mapping(address => Withdraws) public withdraws;
 
-   constructor() {
-       owner = msg.sender;
-   }
-
-   function depositMoney() public payable {
-       require(msg.sender == owner, "You are (not) the owner");
+   function depositMoney() public payable onlyOwner {
        wallet[owner].totalBalance += msg.value;
        wallet[owner].numTransactions++; 
    }
 
-   function withdrawRequest() public {
+   function requestWithdraw() public {
        wallet[owner].withdrawReqs++;
-       Request memory request = Request(msg.sender, 1 ether, block.timestamp);
-       wallet[owner].requests[wallet[owner].withdrawReqs] = request;
+       Request memory _request = Request(msg.sender, 1 ether, block.timestamp);
+       wallet[owner].requests[wallet[owner].withdrawReqs] = _request;
+       withdraws[msg.sender].activeRequests++;
+   }
+
+   function acceptWithdraw(uint _index, uint _amount) public onlyOwner {
+       address payable _to = payable(wallet[owner].requests[_index].req);
+
+       WithdrawHistory memory _withdrawHistory = WithdrawHistory(_amount * 1 ether, block.timestamp);
+
+       withdraws[_to].totalRequests++;
+       withdraws[_to].activeRequests--;
+       withdraws[_to].withdrawHistory[withdraws[_to].totalRequests] = _withdrawHistory;
+       
+       Payments memory _payments = Payments(_to, withdraws[_to].totalRequests);
+       
+       wallet[owner].totalBalance -= _amount * 1 ether;
+       wallet[owner].numTransactions++;
+       wallet[owner].withdrawReqs--;
+       wallet[owner].payments[wallet[owner].numTransactions] = _payments;
+       _to.transfer(_amount * 1 ether);
+   }
+
+    // Show functions
+   function showActiveRequests(uint _index) onlyOwner public view returns(Request memory) {
+       return wallet[owner].requests[_index];
    }
 }
