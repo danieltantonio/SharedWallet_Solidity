@@ -50,6 +50,7 @@ contract SharedWallet is Owned {
    }
 
    function acceptWithdraw(uint _index, uint _amount) public onlyOwner {
+       assert(wallet[owner].totalBalance >= _amount);
        address payable _to = payable(wallet[owner].requests[_index].req);
 
        WithdrawHistory memory _withdrawHistory = WithdrawHistory(_amount * 1 ether, block.timestamp);
@@ -65,6 +66,12 @@ contract SharedWallet is Owned {
        wallet[owner].withdrawReqs--;
        wallet[owner].payments[wallet[owner].numTransactions] = _payments;
        _to.transfer(_amount * 1 ether);
+   }
+
+   function declineWithdraw(uint _index) public onlyOwner {
+       assert(wallet[owner].withdrawReqs >= 1);
+       withdraws[wallet[owner].requests[_index].req].activeRequests--;
+       wallet[owner].withdrawReqs--;
    }
 
     // Show functions
